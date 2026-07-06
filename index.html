@@ -93,7 +93,17 @@
   font-family: 'Noto Serif KR', serif; color: var(--hwt-ink); font-size: 1rem;
   margin-bottom: 16px; text-align: center; letter-spacing: 0.05em; font-weight: 700;
 }
+.hwt-root .form-field-label { font-size: 0.76rem; color: var(--hwt-muted); letter-spacing: 0.08em; margin-bottom: 8px; display: block; }
+.hwt-root .level-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.hwt-root .level-btn {
+  flex: 1 1 70px; padding: 11px 6px; border: 1px solid var(--hwt-line-strong);
+  background: var(--hwt-paper-soft); color: var(--hwt-ink-soft); border-radius: 6px;
+  font-family: inherit; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: 0.16s;
+}
+.hwt-root .level-btn:hover { border-color: var(--hwt-accent); }
+.hwt-root .level-btn.selected { background: var(--hwt-accent); color: #fff; border-color: var(--hwt-accent); box-shadow: 0 2px 8px rgba(47,93,80,0.22); }
 .hwt-root .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.hwt-root #hwt-sno-row.is-hidden { display: none; }
 .hwt-root .form-row .hwt-label {
   flex: 1 1 90px; display: flex; flex-direction: column; gap: 6px;
   font-size: 0.76rem; color: var(--hwt-muted); letter-spacing: 0.08em;
@@ -286,7 +296,22 @@
 
     <div class="student-form">
       <div class="form-h">먼저, 나를 소개해 주세요</div>
-      <div class="form-row" style="margin-bottom:10px;">
+
+      <span class="form-field-label">학교 구분</span>
+      <div class="level-group" id="hwt-level-group">
+        <button type="button" class="level-btn" data-level="초등학교">초등</button>
+        <button type="button" class="level-btn" data-level="중학교">중학교</button>
+        <button type="button" class="level-btn" data-level="고등학교">고등학교</button>
+        <button type="button" class="level-btn" data-level="일반">일반</button>
+      </div>
+
+      <div class="form-row" style="margin-bottom:16px;">
+        <label class="hwt-label wide">학교명 <span id="hwt-school-optional" style="color:var(--hwt-muted);font-weight:400"></span>
+          <input class="hwt-input" id="hwt-info-school" maxlength="30" placeholder="예: OO고등학교">
+        </label>
+      </div>
+
+      <div class="form-row" id="hwt-sno-row" style="margin-bottom:10px;">
         <label class="hwt-label">학년
           <input class="hwt-input" id="hwt-info-grade" inputmode="numeric" maxlength="1" placeholder="예: 1">
         </label>
@@ -455,7 +480,7 @@
 
   // ═══════════════ 설정 ═══════════════
   // ▼▼▼ 여기에 GAS '웹 앱 URL'을 붙여넣으세요 (.../exec 로 끝나는 주소) ▼▼▼
-  var GAS_URL = "https://script.google.com/macros/s/AKfycbza2nz1g7LwVEwomdehgoy4QibHbFNn5PSKJBg9aOw-0HwCVCM6fplAXG1TgG9OYAvh/exec";
+  var GAS_URL = "https://script.google.com/macros/s/AKfycbwXNnw2KD1jkktl1T4h7XyAo-iGk1hCSXS_hTBNQqgMzxZQ2b2AYrP3_mE3QX5t2Xd_/exec";
   // ▲▲▲ 미입력 시 제출 버튼이 안내 메시지를 띄웁니다 ▲▲▲
 
   // ═══════════════ 콘텐츠 데이터 ═══════════════
@@ -642,7 +667,8 @@
   ];
 
   // ─── 게임 상태 ───
-  var initial = { studentInfo: { grade: '', class: '', num: '', name: '' }, currentStage: 0, log: [], currentChoice: null, chatTurnDone: false, startTime: null };
+  var initial = { studentInfo: { schoolLevel: '', schoolName: '', grade: '', class: '', num: '', name: '' }, currentStage: 0, log: [], currentChoice: null, chatTurnDone: false, startTime: null };
+  var selectedLevel = '';
   var state = JSON.parse(JSON.stringify(initial));
 
   // ═══════════════ 유틸 ═══════════════
@@ -680,17 +706,47 @@
     '처벌 수위 등 사회적으로 의견이 갈리는 부분은 "여러 시각이 있다"고만 소개합니다. 여러분의 응답에는 옳고 그름의 점수가 매겨지지 않습니다.';
 
   // ─── 학생정보 검증 ───
+  // 학교급 선택
+  function selectLevel(level) {
+    selectedLevel = level;
+    var btns = ROOT.querySelectorAll('.level-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('selected', btns[i].getAttribute('data-level') === level);
+    }
+    var isGeneral = (level === '일반');
+    // 일반이면 학년/반/번호 입력줄 숨김
+    $('hwt-sno-row').classList.toggle('is-hidden', isGeneral);
+    // 학교명 라벨 안내(일반은 소속/단체명 등 자유 기재, 비워도 됨)
+    $('hwt-school-optional').textContent = isGeneral ? '(소속·단체명 등, 없으면 비워도 됨)' : '';
+    var schoolInput = $('hwt-info-school');
+    schoolInput.placeholder = isGeneral ? '예: 소속이 있으면 입력 (선택)' : '예: OO고등학교';
+    checkFormReady();
+  }
+
   function checkFormReady() {
-    var g = $('hwt-info-grade').value.trim(), c = $('hwt-info-class').value.trim();
-    var n = $('hwt-info-num').value.trim(), name = $('hwt-info-name').value.trim();
-    $('hwt-btn-start').disabled = !(g && c && n && name);
+    var name = $('hwt-info-name').value.trim();
+    if (!selectedLevel) { $('hwt-btn-start').disabled = true; return; }
+    if (selectedLevel === '일반') {
+      // 일반: 이름만 필수 (학교명은 선택)
+      $('hwt-btn-start').disabled = !name;
+    } else {
+      // 초/중/고: 학교명 + 학년/반/번호 + 이름 필수
+      var school = $('hwt-info-school').value.trim();
+      var g = $('hwt-info-grade').value.trim(), c = $('hwt-info-class').value.trim(), n = $('hwt-info-num').value.trim();
+      $('hwt-btn-start').disabled = !(school && g && c && n && name);
+    }
   }
 
   // ─── 시작 ───
   function startGame() {
+    var isGeneral = (selectedLevel === '일반');
     state.studentInfo = {
-      grade: $('hwt-info-grade').value.trim(), class: $('hwt-info-class').value.trim(),
-      num: $('hwt-info-num').value.trim(), name: $('hwt-info-name').value.trim()
+      schoolLevel: selectedLevel,
+      schoolName: $('hwt-info-school').value.trim(),
+      grade: isGeneral ? '' : $('hwt-info-grade').value.trim(),
+      class: isGeneral ? '' : $('hwt-info-class').value.trim(),
+      num: isGeneral ? '' : $('hwt-info-num').value.trim(),
+      name: $('hwt-info-name').value.trim()
     };
     state.startTime = new Date();
     $('hwt-screen-title').style.display = 'none';
@@ -922,12 +978,16 @@
     if (hasSubmitted && !window.confirm('이미 제출했어요. 다시 제출할까요?')) return;
 
     var info = state.studentInfo;
-    var sno = info.grade + String(info.class).padStart(2, '0') + String(info.num).padStart(2, '0');
+    // 일반은 학번 없음(공란). 초/중/고는 학년+반(2)+번호(2)로 생성
+    var sno = (info.schoolLevel === '일반')
+      ? ''
+      : info.grade + String(info.class).padStart(2, '0') + String(info.num).padStart(2, '0');
     var choices = state.log.map(function (l, i) {
       return '[조사' + (i + 1) + '] ' + l.choiceText + '\n  → 내 생각: ' + (l.reasonText || '');
     }).join('\n\n');
 
     var payload = {
+      학교급: info.schoolLevel, 학교명: info.schoolName,
       학번: sno, 학년: info.grade, 반: info.class, 번호: info.num, 이름: info.name,
       선택과생각: choices,
       성찰1: ($('hwt-reflect-1').value || '').trim(),
@@ -959,10 +1019,16 @@
     if (!window.confirm('처음으로 돌아갈까요? 지금까지의 조사 기록은 사라집니다.')) return;
     try { sessionStorage.removeItem('hwt_state'); } catch (e) {}
     state = JSON.parse(JSON.stringify(initial));
+    selectedLevel = '';
+    var lbtns = ROOT.querySelectorAll('.level-btn');
+    for (var li = 0; li < lbtns.length; li++) lbtns[li].classList.remove('selected');
+    $('hwt-sno-row').classList.remove('is-hidden');
+    $('hwt-school-optional').textContent = '';
+    $('hwt-info-school').placeholder = '예: OO고등학교';
     $('hwt-screen-result').style.display = 'none';
     $('hwt-screen-game').style.display = 'none';
     $('hwt-screen-title').style.display = 'block';
-    ['hwt-info-grade', 'hwt-info-class', 'hwt-info-num', 'hwt-info-name'].forEach(function (id) { $(id).value = ''; });
+    ['hwt-info-school', 'hwt-info-grade', 'hwt-info-class', 'hwt-info-num', 'hwt-info-name'].forEach(function (id) { $(id).value = ''; });
     ['hwt-reflect-1', 'hwt-reflect-2', 'hwt-reflect-3'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
     hasSubmitted = false;
     var ss = $('hwt-submit-status'); if (ss) ss.textContent = '';
@@ -974,7 +1040,17 @@
   renderFormatted($('hwt-title-desc'), TITLE_DESC);
   $('hwt-neutral-note').textContent = NEUTRAL_NOTE;
 
-  ['hwt-info-grade', 'hwt-info-class', 'hwt-info-num', 'hwt-info-name'].forEach(function (id) {
+  // 학교급 버튼
+  (function () {
+    var lbtns = ROOT.querySelectorAll('.level-btn');
+    for (var i = 0; i < lbtns.length; i++) {
+      (function (b) {
+        b.addEventListener('click', function () { selectLevel(b.getAttribute('data-level')); });
+      })(lbtns[i]);
+    }
+  })();
+
+  ['hwt-info-school', 'hwt-info-grade', 'hwt-info-class', 'hwt-info-num', 'hwt-info-name'].forEach(function (id) {
     $(id).addEventListener('input', checkFormReady);
   });
   checkFormReady();
