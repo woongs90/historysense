@@ -1,0 +1,1004 @@
+<meta charset="utf-8">
+<!-- 이 조각을 휴대폰에서 "단독"으로 열 때도 화면 폭에 맞춰 보이도록 viewport 지정.
+     (다른 페이지에 임베드할 경우엔 그 페이지의 viewport 설정이 우선 적용됨) -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ════════════════════════════════════════════════════════════
+     "말의 무게 — 어떤 구호는 왜 문제가 되었을까"
+     · 2026년 고교야구 응원 구호 논란을 계기로, 그 구호가 끌어온
+       역사(5·18 민주화운동, 박종철 사건)를 스스로 조사·이해하는 교육용 시뮬레이션.
+     · 특정 정당·진영을 지목하지 않고, 확립된 역사적 사실과
+       "피해자가 실재하는 비극을 조롱 소재로 쓰면 왜 상처가 되는가"에 집중(정치적 중립).
+     · 임베드용 조각: 외부 문서 구조 태그(루트/헤드/바디) 없음, 단일 래퍼 div.
+     · 모든 CSS는 .hwt-root 하위로 스코프. 전역블록/고정위치 미사용.
+     · 모든 동적 출력은 createElement/textContent 로만 구성(마크업 직접 주입 미사용).
+     · 외부 CDN 미사용(시스템 폰트).
+     ════════════════════════════════════════════════════════════ -->
+<div class="hwt-root">
+<style>
+.hwt-root {
+  /* ── 색상 토큰: 차분한 취재 노트/문서 톤 (밝은 종이 + 먹빛 + 절제된 청록 강조) ── */
+  --hwt-bg: #f4f2ec;
+  --hwt-paper: #ffffff;
+  --hwt-paper-soft: #faf8f2;
+  --hwt-ink: #23211c;
+  --hwt-ink-soft: #4a463d;
+  --hwt-muted: #8a8474;
+  --hwt-line: #ddd8cc;
+  --hwt-line-strong: #c7c1b2;
+  --hwt-accent: #2f5d50;       /* 절제된 딥그린 (강조) */
+  --hwt-accent-soft: #eef2ef;
+  --hwt-accent-line: #b9ccc4;
+  --hwt-mark: #7a2f2f;         /* 인용/사료 강조용 적갈 */
+  --hwt-mark-soft: #f3ece8;
+  --hwt-user-bg: #2f5d50;
+  --hwt-ai-bg: #f1efe7;
+  position: relative;
+  background: var(--hwt-bg);
+  color: var(--hwt-ink);
+  font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  border-radius: 8px;
+  overflow: hidden;
+  line-height: 1.6;
+}
+.hwt-root * { box-sizing: border-box; }
+.hwt-root .hwt-serif { font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif; }
+.hwt-root .hwt-b { font-weight: 700; color: var(--hwt-accent); }
+.hwt-root .hwt-i { font-style: normal; color: var(--hwt-mark); font-weight: 600; }
+
+.hwt-root .hwt-bg-layer {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(47,93,80,0.035) 27px, rgba(47,93,80,0.035) 28px);
+}
+.hwt-root .hwt-container { max-width: 860px; margin: 0 auto; padding: 26px 20px 40px; position: relative; z-index: 1; }
+
+/* ============ 1. 타이틀 ============ */
+.hwt-root .hwt-screen-title { text-align: center; padding: 30px 12px 40px; }
+.hwt-root .title-eyebrow {
+  font-family: 'Noto Serif KR', serif; font-size: 0.78rem; letter-spacing: 0.42em;
+  color: var(--hwt-accent); margin-bottom: 18px; text-transform: none;
+}
+.hwt-root .title-main {
+  font-family: 'Noto Serif KR', serif; font-weight: 800;
+  font-size: clamp(2rem, 6.5vw, 3.1rem); color: var(--hwt-ink);
+  letter-spacing: -0.01em; line-height: 1.2; margin-bottom: 14px;
+}
+.hwt-root .title-main .accent { color: var(--hwt-accent); }
+.hwt-root .title-sub {
+  font-size: 0.92rem; color: var(--hwt-muted); letter-spacing: 0.06em;
+  margin-bottom: 30px; word-break: keep-all;
+}
+.hwt-root .title-desc {
+  max-width: 600px; margin: 0 auto 30px; text-align: left;
+  background: var(--hwt-paper); border: 1px solid var(--hwt-line);
+  border-left: 3px solid var(--hwt-accent);
+  padding: 22px 24px; border-radius: 4px; line-height: 1.95;
+  color: var(--hwt-ink-soft); font-size: 0.96rem; word-break: keep-all;
+}
+
+.hwt-root .neutral-note {
+  max-width: 600px; margin: 0 auto 28px; text-align: left;
+  font-size: 0.82rem; color: var(--hwt-muted); line-height: 1.75;
+  background: var(--hwt-accent-soft); border: 1px dashed var(--hwt-accent-line);
+  border-radius: 4px; padding: 14px 16px; word-break: keep-all;
+}
+.hwt-root .neutral-note strong { color: var(--hwt-accent); font-weight: 700; }
+
+.hwt-root .student-form {
+  max-width: 540px; margin: 0 auto 26px; background: var(--hwt-paper);
+  border: 1px solid var(--hwt-line); padding: 22px 22px 24px; border-radius: 6px;
+  text-align: left; box-shadow: 0 1px 0 var(--hwt-line-strong);
+}
+.hwt-root .student-form .form-h {
+  font-family: 'Noto Serif KR', serif; color: var(--hwt-ink); font-size: 1rem;
+  margin-bottom: 16px; text-align: center; letter-spacing: 0.05em; font-weight: 700;
+}
+.hwt-root .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.hwt-root .form-row .hwt-label {
+  flex: 1 1 90px; display: flex; flex-direction: column; gap: 6px;
+  font-size: 0.76rem; color: var(--hwt-muted); letter-spacing: 0.08em;
+}
+.hwt-root .form-row .hwt-label.wide { flex: 2 1 180px; }
+.hwt-root .form-row .hwt-input {
+  background: var(--hwt-paper-soft); border: 1px solid var(--hwt-line-strong);
+  color: var(--hwt-ink); padding: 10px 12px; font-family: inherit;
+  font-size: 0.95rem; border-radius: 4px; outline: none; transition: border 0.2s;
+}
+.hwt-root .form-row .hwt-input:focus { border-color: var(--hwt-accent); }
+
+.hwt-root .btn-start {
+  display: inline-block; background: var(--hwt-accent); color: #fff;
+  font-family: 'Noto Serif KR', serif; font-size: 1.02rem; font-weight: 700;
+  padding: 15px 44px; border: none; border-radius: 4px; cursor: pointer;
+  letter-spacing: 0.16em; transition: 0.2s; box-shadow: 0 3px 12px rgba(47,93,80,0.22);
+}
+.hwt-root .btn-start:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(47,93,80,0.3); }
+.hwt-root .btn-start:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ============ 2. 게임 화면 ============ */
+.hwt-root .hwt-screen-game { display: none; }
+
+.hwt-root .progress-strip {
+  background: var(--hwt-paper); border: 1px solid var(--hwt-line);
+  border-radius: 6px; padding: 12px 18px; margin-bottom: 16px;
+}
+.hwt-root .progress-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.hwt-root .progress-title { font-family: 'Noto Serif KR', serif; color: var(--hwt-accent); font-size: 0.78rem; letter-spacing: 0.14em; font-weight: 700; }
+.hwt-root .progress-turn { color: var(--hwt-muted); font-size: 0.75rem; }
+.hwt-root .progress-marks { position: relative; display: flex; justify-content: space-between; align-items: flex-start; }
+.hwt-root .progress-marks::before {
+  content: ''; position: absolute; left: 8px; right: 8px; top: 6px; height: 2px;
+  background: var(--hwt-line-strong); z-index: 0;
+}
+.hwt-root .pmark { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+.hwt-root .pmark-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--hwt-paper); border: 2px solid var(--hwt-line-strong); transition: all 0.3s; }
+.hwt-root .pmark.done .pmark-dot { background: var(--hwt-accent-line); border-color: var(--hwt-accent-line); }
+.hwt-root .pmark.active .pmark-dot { background: var(--hwt-accent); border-color: var(--hwt-accent); box-shadow: 0 0 0 4px var(--hwt-accent-soft); }
+.hwt-root .pmark-label { font-size: 0.62rem; color: var(--hwt-muted); white-space: nowrap; text-align: center; }
+.hwt-root .pmark.active .pmark-label { color: var(--hwt-accent); font-weight: 700; }
+
+/* 자료 카드 (뉴스/사료 발췌) */
+.hwt-root .source-card {
+  background: var(--hwt-mark-soft); border: 1px solid var(--hwt-line);
+  border-left: 4px solid var(--hwt-mark); border-radius: 4px;
+  padding: 16px 20px 14px; margin-bottom: 16px; position: relative;
+}
+.hwt-root .source-kicker {
+  font-family: 'Noto Serif KR', serif; color: var(--hwt-mark);
+  font-size: 0.72rem; letter-spacing: 0.14em; margin-bottom: 9px; font-weight: 700;
+}
+.hwt-root .source-quote {
+  color: var(--hwt-ink-soft); font-size: 0.92rem; line-height: 1.85;
+  font-family: 'Noto Serif KR', serif; word-break: keep-all;
+}
+.hwt-root .source-attr { margin-top: 10px; text-align: right; font-size: 0.72rem; color: var(--hwt-muted); }
+.hwt-root .source-attr strong { color: var(--hwt-mark); font-weight: 700; }
+
+/* 씬 카드 */
+.hwt-root .scene-card {
+  background: var(--hwt-paper); border: 1px solid var(--hwt-line);
+  border-radius: 6px; padding: 24px; margin-bottom: 16px; position: relative;
+  box-shadow: 0 1px 0 var(--hwt-line-strong);
+}
+.hwt-root .scene-day { font-family: 'Noto Serif KR', serif; color: var(--hwt-accent); font-size: 0.8rem; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 700; }
+.hwt-root .scene-title { font-family: 'Noto Serif KR', serif; color: var(--hwt-ink); font-size: 1.32rem; font-weight: 800; margin-bottom: 8px; line-height: 1.4; word-break: keep-all; }
+.hwt-root .scene-place { color: var(--hwt-muted); font-size: 0.8rem; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--hwt-line); }
+.hwt-root .scene-text { color: var(--hwt-ink-soft); line-height: 1.95; font-size: 0.97rem; word-break: keep-all; }
+
+/* 선택지 */
+.hwt-root .choices { margin-bottom: 18px; }
+.hwt-root .choices-label { font-size: 0.8rem; color: var(--hwt-muted); margin-bottom: 10px; letter-spacing: 0.06em; }
+.hwt-root .choice-btn {
+  width: 100%; text-align: left; background: var(--hwt-paper);
+  border: 1px solid var(--hwt-line-strong); border-radius: 5px;
+  padding: 15px 16px; margin-bottom: 10px; cursor: pointer;
+  transition: 0.18s; display: flex; align-items: flex-start; gap: 12px;
+  font-family: inherit; color: var(--hwt-ink);
+}
+.hwt-root .choice-btn:hover { border-color: var(--hwt-accent); background: var(--hwt-accent-soft); }
+.hwt-root .choice-btn.selected { border-color: var(--hwt-accent); background: var(--hwt-accent-soft); box-shadow: inset 0 0 0 1px var(--hwt-accent); }
+.hwt-root .choice-num { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--hwt-accent); color: #fff; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+.hwt-root .choice-body { flex: 1; }
+.hwt-root .choice-text { font-size: 0.94rem; line-height: 1.5; font-weight: 500; }
+.hwt-root .choice-hint { display: block; font-size: 0.78rem; color: var(--hwt-muted); margin-top: 4px; }
+
+/* 대화(길잡이) 영역 */
+.hwt-root .chat-section { display: none; margin-top: 6px; }
+.hwt-root .chat-section.active { display: block; }
+.hwt-root .chat-box { background: var(--hwt-paper-soft); border: 1px solid var(--hwt-line); border-radius: 6px; overflow: hidden; }
+.hwt-root .chat-header { background: var(--hwt-accent); color: #fff; padding: 11px 16px; font-family: 'Noto Serif KR', serif; font-size: 0.85rem; letter-spacing: 0.05em; }
+.hwt-root .chat-messages { padding: 16px; max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.hwt-root .bubble { max-width: 88%; padding: 11px 14px; border-radius: 12px; font-size: 0.92rem; line-height: 1.65; word-break: keep-all; }
+.hwt-root .bubble.ai-msg { align-self: flex-start; background: var(--hwt-ai-bg); border: 1px solid var(--hwt-line); border-bottom-left-radius: 3px; color: var(--hwt-ink); position: relative; }
+.hwt-root .bubble.user-msg { align-self: flex-end; background: var(--hwt-user-bg); color: #fff; border-bottom-right-radius: 3px; }
+.hwt-root .ai-tag { display: block; font-size: 0.7rem; color: var(--hwt-accent); font-weight: 700; margin-bottom: 4px; letter-spacing: 0.04em; }
+
+.hwt-root .typing-dot { display: inline-block; width: 6px; height: 6px; margin: 0 2px; border-radius: 50%; background: var(--hwt-muted); animation: hwt-blink 1.2s infinite; }
+.hwt-root .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.hwt-root .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes hwt-blink { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+
+.hwt-root .kw-hint { display: none; margin: 12px 16px 0; padding: 12px 14px; background: var(--hwt-accent-soft); border: 1px dashed var(--hwt-accent-line); border-radius: 5px; }
+.hwt-root .kw-hint-label { display: block; font-size: 0.78rem; color: var(--hwt-accent); font-weight: 700; margin-bottom: 8px; }
+.hwt-root .kw-chip { display: inline-block; background: var(--hwt-paper); border: 1px solid var(--hwt-accent-line); color: var(--hwt-accent); font-size: 0.78rem; padding: 4px 10px; border-radius: 20px; margin: 0 6px 6px 0; }
+.hwt-root .kw-note { font-size: 0.76rem; color: var(--hwt-muted); margin-top: 4px; line-height: 1.6; }
+.hwt-root .chat-tip { display: none; margin: 12px 16px 0; font-size: 0.8rem; color: var(--hwt-ink-soft); background: var(--hwt-paper); border: 1px solid var(--hwt-line); border-radius: 5px; padding: 11px 13px; line-height: 1.6; }
+.hwt-root .chat-tip strong { color: var(--hwt-accent); }
+
+.hwt-root .chat-input-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--hwt-line); align-items: flex-end; }
+.hwt-root .chat-input {
+  flex: 1; background: var(--hwt-paper); border: 1px solid var(--hwt-line-strong);
+  color: var(--hwt-ink); border-radius: 6px; padding: 10px 12px; font-family: inherit;
+  font-size: 0.94rem; resize: none; min-height: 44px; max-height: 140px; outline: none; line-height: 1.5;
+}
+.hwt-root .chat-input:focus { border-color: var(--hwt-accent); }
+.hwt-root .btn-send { flex: 0 0 auto; background: var(--hwt-accent); color: #fff; border: none; border-radius: 6px; padding: 0 18px; height: 44px; font-family: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: 0.18s; }
+.hwt-root .btn-send:hover:not(:disabled) { background: #274d43; }
+.hwt-root .btn-send:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.hwt-root .btn-next {
+  display: block; width: 100%; margin-top: 16px; background: var(--hwt-ink);
+  color: #fff; border: none; border-radius: 5px; padding: 14px; font-family: 'Noto Serif KR', serif;
+  font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; transition: 0.18s;
+}
+.hwt-root .btn-next:hover { background: #000; }
+.hwt-root .btn-next.hidden { display: none; }
+
+/* ============ 3. 결과 화면 ============ */
+.hwt-root .hwt-screen-result { display: none; }
+.hwt-root .result-hero { text-align: center; padding: 26px 16px 24px; background: var(--hwt-paper); border: 1px solid var(--hwt-line); border-top: 4px solid var(--hwt-accent); border-radius: 6px; margin-bottom: 18px; }
+.hwt-root .result-eyebrow { font-family: 'Noto Serif KR', serif; color: var(--hwt-accent); font-size: 0.78rem; letter-spacing: 0.3em; margin-bottom: 12px; }
+.hwt-root .result-title { font-family: 'Noto Serif KR', serif; color: var(--hwt-ink); font-size: 1.6rem; font-weight: 800; margin-bottom: 14px; }
+.hwt-root .result-desc { max-width: 620px; margin: 0 auto; color: var(--hwt-ink-soft); line-height: 1.95; font-size: 0.95rem; word-break: keep-all; text-align: left; white-space: pre-line; }
+
+.hwt-root .section-block { background: var(--hwt-paper); border: 1px solid var(--hwt-line); border-radius: 6px; padding: 20px 22px; margin-bottom: 16px; }
+.hwt-root .section-title { font-family: 'Noto Serif KR', serif; color: var(--hwt-accent); font-size: 1rem; font-weight: 800; margin-bottom: 14px; letter-spacing: 0.06em; padding-bottom: 10px; border-bottom: 1px solid var(--hwt-line); }
+
+.hwt-root .fact-row { padding: 12px 0; border-bottom: 1px dashed var(--hwt-line); }
+.hwt-root .fact-row:last-child { border-bottom: none; }
+.hwt-root .fact-term { font-weight: 700; color: var(--hwt-ink); font-size: 0.93rem; margin-bottom: 4px; }
+.hwt-root .fact-body { color: var(--hwt-ink-soft); font-size: 0.9rem; line-height: 1.75; word-break: keep-all; }
+
+.hwt-root .reflection-q { margin-bottom: 16px; }
+.hwt-root .reflection-q label { display: block; font-size: 0.9rem; color: var(--hwt-ink); margin-bottom: 8px; line-height: 1.6; word-break: keep-all; font-weight: 500; }
+.hwt-root .hwt-textarea { width: 100%; background: var(--hwt-paper-soft); border: 1px solid var(--hwt-line-strong); color: var(--hwt-ink); border-radius: 5px; padding: 11px 13px; font-family: inherit; font-size: 0.92rem; resize: vertical; min-height: 74px; outline: none; line-height: 1.6; }
+.hwt-root .hwt-textarea:focus { border-color: var(--hwt-accent); }
+
+.hwt-root .log-item { padding: 12px 0; border-bottom: 1px solid var(--hwt-line); }
+.hwt-root .log-item:last-child { border-bottom: none; }
+.hwt-root .log-stage { font-size: 0.76rem; color: var(--hwt-accent); font-weight: 700; margin-bottom: 4px; }
+.hwt-root .log-choice { font-size: 0.9rem; color: var(--hwt-ink); margin-bottom: 4px; }
+.hwt-root .log-reason { font-size: 0.86rem; color: var(--hwt-ink-soft); background: var(--hwt-paper-soft); border-left: 2px solid var(--hwt-accent-line); padding: 7px 11px; border-radius: 3px; line-height: 1.6; word-break: keep-all; }
+
+.hwt-root .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.hwt-root .btn-action { flex: 1 1 150px; padding: 13px; border-radius: 5px; font-family: inherit; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: 0.18s; border: 1px solid var(--hwt-line-strong); }
+.hwt-root .btn-action.secondary { background: var(--hwt-paper); color: var(--hwt-ink-soft); }
+.hwt-root .btn-action.secondary:hover { border-color: var(--hwt-ink); }
+.hwt-root .btn-action.primary { background: var(--hwt-accent); color: #fff; border-color: var(--hwt-accent); }
+.hwt-root .btn-action.primary:hover { background: #274d43; }
+
+.hwt-root .warn-popup { display: none; position: absolute; top: 14px; left: 50%; transform: translateX(-50%); background: var(--hwt-mark); color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 0.86rem; z-index: 20; box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+
+.hwt-root .helpline { font-size: 0.78rem; color: var(--hwt-muted); text-align: center; margin-top: 20px; line-height: 1.7; word-break: keep-all; }
+
+@media (max-width: 560px) {
+  .hwt-root .pmark-label { display: none; }
+  .hwt-root .scene-card { padding: 18px; }
+}
+@media print {
+  .hwt-root { background: #fff; }
+  .hwt-root .btn-group, .hwt-root .btn-next, .hwt-root .chat-input-row { display: none !important; }
+}
+</style>
+
+<div class="hwt-bg-layer"></div>
+<div class="hwt-container">
+
+  <!-- ─────────── 화면 1: 타이틀 ─────────── -->
+  <div class="hwt-screen-title" id="hwt-screen-title">
+    <div class="title-eyebrow">역사 이해 시뮬레이션</div>
+    <div class="title-main">말의 <span class="accent">무게</span></div>
+    <div class="title-sub">— 어떤 구호는 왜 문제가 되었을까</div>
+
+    <div class="title-desc" id="hwt-title-desc"></div>
+
+    <div class="neutral-note" id="hwt-neutral-note"></div>
+
+    <div class="student-form">
+      <div class="form-h">먼저, 나를 소개해 주세요</div>
+      <div class="form-row" style="margin-bottom:10px;">
+        <label class="hwt-label">학년
+          <input class="hwt-input" id="hwt-info-grade" inputmode="numeric" maxlength="1" placeholder="예: 1">
+        </label>
+        <label class="hwt-label">반
+          <input class="hwt-input" id="hwt-info-class" inputmode="numeric" maxlength="2" placeholder="예: 3">
+        </label>
+        <label class="hwt-label">번호
+          <input class="hwt-input" id="hwt-info-num" inputmode="numeric" maxlength="2" placeholder="예: 12">
+        </label>
+      </div>
+      <div class="form-row">
+        <label class="hwt-label wide">이름
+          <input class="hwt-input" id="hwt-info-name" maxlength="10" placeholder="이름을 입력하세요">
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-start" id="hwt-btn-start" disabled>시 작 하 기</button>
+  </div>
+
+  <!-- ─────────── 화면 2: 게임 ─────────── -->
+  <div class="hwt-screen-game" id="hwt-screen-game">
+    <div class="progress-strip">
+      <div class="progress-head">
+        <span class="progress-title">조사 노트</span>
+        <span class="progress-turn" id="hwt-progress-turn"></span>
+      </div>
+      <div class="progress-marks" id="hwt-progress-marks"></div>
+    </div>
+
+    <div class="source-card">
+      <div class="source-kicker" id="hwt-source-kicker">자료</div>
+      <div class="source-quote" id="hwt-source-quote"></div>
+      <div class="source-attr" id="hwt-source-attr"></div>
+    </div>
+
+    <div class="scene-card">
+      <div class="scene-day" id="hwt-scene-day"></div>
+      <div class="scene-title" id="hwt-scene-title"></div>
+      <div class="scene-place" id="hwt-scene-place"></div>
+      <div class="scene-text" id="hwt-scene-text"></div>
+    </div>
+
+    <div class="choices">
+      <div class="choices-label">▪ 나의 선택</div>
+      <div id="hwt-choices"></div>
+    </div>
+
+    <div class="chat-section" id="hwt-chat-section">
+      <div class="chat-box">
+        <div class="chat-header" id="hwt-chat-header">이야기 나누기</div>
+        <div class="chat-messages" id="hwt-chat-messages"></div>
+        <div class="kw-hint" id="hwt-kw-hint"></div>
+        <div class="chat-tip" id="hwt-chat-tip"></div>
+        <div class="chat-input-row">
+          <textarea class="chat-input" id="hwt-chat-input" rows="1" placeholder="내 생각을 한두 문장으로 적어보세요..."></textarea>
+          <button class="btn-send" id="hwt-btn-send" disabled>보내기</button>
+        </div>
+      </div>
+      <button class="btn-next hidden" id="hwt-btn-next">다음으로</button>
+    </div>
+  </div>
+
+  <!-- ─────────── 화면 3: 결과 ─────────── -->
+  <div class="hwt-screen-result" id="hwt-screen-result">
+    <div class="result-hero">
+      <div class="result-eyebrow">조사를 마치며</div>
+      <div class="result-title" id="hwt-result-title"></div>
+      <div class="result-desc" id="hwt-result-desc"></div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title">📚 오늘 확인한 사실 정리</div>
+      <div id="hwt-fact-body"></div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title">✍️ 되돌아보기</div>
+      <div class="reflection-q">
+        <label>1. 이번 조사를 하기 전과 후, "탱크데이"나 "스타벅스 가야지" 같은 말에 대한 내 생각은 어떻게 달라졌나요? 달라지지 않았다면 그 이유도 좋아요.</label>
+        <textarea class="hwt-textarea" id="hwt-reflect-1" placeholder="처음엔 ~라고 생각했는데..."></textarea>
+      </div>
+      <div class="reflection-q">
+        <label>2. 어떤 말이 누군가에게는 농담이지만 다른 누군가에게는 상처가 될 수 있습니다. 그 차이는 어디에서 온다고 생각하나요?</label>
+        <textarea class="hwt-textarea" id="hwt-reflect-2" placeholder="같은 말이라도..."></textarea>
+      </div>
+      <div class="reflection-q">
+        <label>3. 앞으로 응원이나 농담을 할 때, 나는 어떤 기준을 세우고 싶나요? 나만의 문장으로 적어보세요.</label>
+        <textarea class="hwt-textarea" id="hwt-reflect-3" placeholder="나는 앞으로..."></textarea>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title">🗂️ 나의 조사 기록</div>
+      <div id="hwt-log-body"></div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn-action secondary" id="hwt-btn-restart">처음으로</button>
+      <button class="btn-action primary" id="hwt-btn-submit">📤 선생님께 제출하기</button>
+      <button class="btn-action primary" id="hwt-btn-print">🖨️ 인쇄 / PDF</button>
+    </div>
+    <div id="hwt-submit-status" style="text-align:center;margin-top:12px;font-size:0.9rem;color:var(--hwt-muted);min-height:20px"></div>
+
+    <div class="helpline" id="hwt-helpline"></div>
+  </div>
+
+  <div class="warn-popup" id="hwt-warn-popup"></div>
+
+</div>
+<script>
+/* ════════════════════════════════════════════════
+   "말의 무게" — 게임 로직 (보안 규칙 준수)
+   · 마크업 직접 주입 계열 API 미사용 → 모든 출력은 createElement + textContent
+   · <br><strong><em> 서식은 화이트리스트 파서로만 처리
+   · querySelector 범위를 래퍼(.hwt-root)로 한정
+   · IIFE로 전역 오염 방지
+   · 외부 AI 호출 없음: 응답은 키워드 기반 결정형(오프라인)
+   ════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var ROOT = document.currentScript && document.currentScript.closest
+    ? document.currentScript.closest('.hwt-root')
+    : null;
+  if (!ROOT) {
+    var roots = document.getElementsByClassName('hwt-root');
+    ROOT = roots[roots.length - 1];
+  }
+  function $(id) { return ROOT.querySelector('#' + id); }
+
+  // ─── 안전 렌더: <br><strong><em> 만 실제 노드로 변환 ───
+  function renderFormatted(target, raw) {
+    while (target.firstChild) target.removeChild(target.firstChild);
+    if (raw == null) return;
+    var lines = String(raw).split(/<br\s*\/?>/i);
+    for (var li = 0; li < lines.length; li++) {
+      if (li > 0) target.appendChild(document.createElement('br'));
+      appendInline(target, lines[li]);
+    }
+  }
+  function appendInline(parent, text) {
+    var tagRe = /<(\/?)(strong|em)>/gi;
+    var lastIndex = 0, m, stack = [parent];
+    function current() { return stack[stack.length - 1]; }
+    while ((m = tagRe.exec(text)) !== null) {
+      if (m.index > lastIndex) current().appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+      var closing = m[1] === '/', tag = m[2].toLowerCase();
+      if (!closing) {
+        var el = document.createElement(tag);
+        el.className = (tag === 'strong') ? 'hwt-b' : 'hwt-i';
+        current().appendChild(el);
+        stack.push(el);
+      } else if (stack.length > 1) { stack.pop(); }
+      lastIndex = tagRe.lastIndex;
+    }
+    if (lastIndex < text.length) current().appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+  function clearNode(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+  function makeEl(tag, cls, text) {
+    var el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text != null) el.textContent = String(text);
+    return el;
+  }
+
+  // ═══════════════ 설정 ═══════════════
+  // ▼▼▼ 여기에 GAS '웹 앱 URL'을 붙여넣으세요 (.../exec 로 끝나는 주소) ▼▼▼
+  var GAS_URL = "https://script.google.com/macros/s/AKfycbza2nz1g7LwVEwomdehgoy4QibHbFNn5PSKJBg9aOw-0HwCVCM6fplAXG1TgG9OYAvh/exec";
+  // ▲▲▲ 미입력 시 제출 버튼이 안내 메시지를 띄웁니다 ▲▲▲
+
+  // ═══════════════ 콘텐츠 데이터 ═══════════════
+
+  // 각 막의 자료 카드 (뉴스/역사 기록의 사실을 충실히 요약 — 특정 정당·진영 지목 없음)
+  var SOURCE_CARDS = [
+    {
+      kicker: '뉴스 · 사건의 시작',
+      quote: '2026년 6월, 한 전국 고교야구 대회 경기 도중 서울의 A고등학교 응원석에서 상대인 광주 지역 학교를 향해 "가야지, 스타벅스 가야지", "탱크데이" 같은 구호가 나왔다. 이 구호가 5·18 민주화운동을 조롱한 것으로 해석되면서 논란이 커졌고, 야구협회는 해당 학교에 전국대회 출전 정지 징계를 내렸다.',
+      source: '2026년 6월~7월 국내 언론 보도 종합',
+      note: '경기 자체가 아니라 "구호가 무엇을 가리켰는가"가 문제의 핵심이 되었다.'
+    },
+    {
+      kicker: '자료 · 말의 출처를 따라가면',
+      quote: '문제가 된 구호는 그해 5월, 한 커피 브랜드가 5월 18일에 진행한 텀블러 행사에서 "탱크데이", "책상에 탁" 같은 문구를 써서 크게 논란이 됐던 사건과 이어져 있다. 즉 야구장의 구호는 그 사건을 "가져와" 상대를 놀리는 데 쓴 것이었다.',
+      source: '2026년 5월 커피 브랜드 행사 논란 보도 종합',
+      note: '하나의 말은 대개 "그 앞의 어떤 일"을 가리킨다. 구호도 마찬가지였다.'
+    },
+    {
+      kicker: '역사 · "탱크"라는 말이 가리키는 것',
+      quote: '5·18 민주화운동(1980)은 당시 계엄 확대에 반대한 광주 시민과 학생들이 벌인 민주화 운동으로, 진압 과정에서 계엄군이 무력을 동원해 많은 시민이 목숨을 잃거나 다쳤다. "탱크"는 그날 거리로 들어온 군 장비를 떠올리게 하는 말이다. 오늘날 5·18은 법으로 그 성격이 규정되고 국가기념일로 지정돼 있다.',
+      source: '한국 근현대사 · 5·18민주화운동 관련 법령',
+      note: '광주에는 그날의 일을 직접 겪은 사람과 유가족이 지금도 살고 있다.'
+    },
+    {
+      kicker: '역사 · "책상에 탁"이라는 말이 가리키는 것',
+      quote: '"책상을 탁 치니 억 하고 죽었다." 1987년, 경찰 조사를 받던 대학생 박종철이 고문으로 숨졌는데, 당국은 사인을 이렇게 둘러댔다. 이 거짓말은 오히려 진실을 밝히려는 시민들의 움직임에 불을 붙였고, 그해 6월 민주항쟁으로 이어졌다.',
+      source: '한국 근현대사 · 박종철 고문치사 사건(1987)',
+      note: '한 사람의 죽음을 가벼운 말장난처럼 다루면, 남은 가족에게는 어떤 말로 들릴까.'
+    },
+    {
+      kicker: '현장 · "그냥 장난이었다"는 말',
+      quote: '논란이 일자 응원을 주도한 학생들은 징계 절차를 밟게 됐고, 학교는 "단순한 실수가 아니라 역사 인식이 부족했던 일"이라며 여러 차례 사과했다. 한편 일부에서는 "응원이 그렇게까지 큰 잘못이냐"는 반응도 나오는 등, 이 사건을 두고 사회적으로 여러 목소리가 있었다.',
+      source: '2026년 7월 보도 종합',
+      note: '"의도"와 "결과"는 다를 수 있다. 이 막에서는 그 사이를 생각해 본다.'
+    },
+    {
+      kicker: '이후 · 사과, 그리고 남는 질문',
+      quote: '사건 이후 해당 학교 야구부와 학생·학부모·교직원 등은 광주의 학교를 직접 찾아 사과하고 5·18 관련 묘역을 함께 참배하기로 했다. 두 지역 교육청은 이 일을 계기로 민주시민교육을 강화하겠다고 밝혔다. 사건은 "잘잘못"을 넘어, 학교 응원 문화 전체를 되돌아보게 만들었다.',
+      source: '2026년 7월 보도 종합',
+      note: '끝은 처벌이 아니라, "다음엔 어떻게 할까"라는 질문으로 이어졌다.'
+    }
+  ];
+
+  // 6개의 조사 장면
+  var STAGES = [
+    {
+      id: 1,
+      day: '조사 1 · 사건을 마주하다',
+      title: '"이게 왜 그렇게 큰일이야?"',
+      place: '어느 날, 타임라인에 뜬 뉴스 앞에서',
+      text: `야구 경기 하나가 온 나라의 뉴스가 됐다. 화면에는 "탱크데이", "스타벅스 가야지" 같은 구호를 외친 학생들, 그리고 학교 앞에 놓인 <strong>근조 화환</strong>이 보인다.<br><br>솔직히 처음엔 잘 이해가 안 된다. <em>응원하다 나온 말 한마디가, 이렇게까지 큰일이 될 일인가?</em> 그런데 어른들도, 뉴스도, 광주의 학교도 하나같이 심각하게 반응한다.<br><br>궁금해진 당신은 결심한다. <strong>누가 시켜서가 아니라, 내가 직접 알아보기로.</strong>`,
+      choices: [
+        { num: '1', text: '일단 이 말들이 원래 어디서 나온 건지부터 찾아본다.', hint: '말의 출처를 추적한다.', keywords: ['출처', '어디서', '유래', '원래'] },
+        { num: '2', text: '왜 광주 사람들이 특히 화가 났는지, 그 감정부터 이해해 본다.', hint: '사람의 입장에서 접근한다.', keywords: ['광주', '입장', '왜 화가', '감정'] },
+        { num: '3', text: '"장난 아니냐"는 반응과 "잘못"이라는 반응을 둘 다 살펴본다.', hint: '양쪽 시각을 함께 본다.', keywords: ['양쪽', '장난', '잘못', '여러 시각'] }
+      ],
+      persona: '길잡이',
+      opening: '좋아, 직접 알아보기로 한 거 멋지다. 그런데 시작하기 전에 하나만 — <strong>지금 이 순간</strong>, 이 사건에 대한 네 솔직한 첫 느낌은 어때? 이해가 안 되면 안 된다고 적어도 좋아. 정답은 없어.',
+      followup: function (text) {
+        var t = text.replace(/\s/g, '');
+        if (/(이해안|모르|잘모|왜이렇|과한|오버|장난인데|뭐가문제)/.test(t)) return '솔직해서 좋아. "왜 이게 큰일이지?"라는 그 물음이 바로 오늘 조사의 출발점이야. 그 느낌을 기억해 두자 — 조사를 마칠 때 지금과 어떻게 달라지는지 비교해 볼 수 있으니까.';
+        if (/(심각|상처|잘못|문제|무섭|충격|화가|안타)/.test(t)) return '그렇게 느꼈구나. 그럼 한 걸음 더 들어가 볼까? "왜" 상처가 되는지를 알면, 네 그 느낌에 이유가 생겨. 이유가 있는 생각은 훨씬 단단해지거든.';
+        return '어떤 느낌이든 괜찮아. 중요한 건 남의 결론을 외우는 게 아니라, 네가 직접 이유를 찾아가는 거야. 그럼 첫 단서부터 따라가 보자.';
+      }
+    },
+    {
+      id: 2,
+      day: '조사 2 · 말의 출처를 따라가다',
+      title: '구호는 어디서 왔을까',
+      place: '검색창 앞에서',
+      text: `찾아보니 "탱크데이"와 "책상에 탁"은 야구장에서 처음 나온 말이 아니었다. 그해 <strong>5월, 한 커피 브랜드의 행사</strong>에서 쓰였다가 크게 논란이 된 문구였다.<br><br>즉 야구장의 구호는 그 논란을 <strong>그대로 가져와</strong> 상대 팀을 놀리는 데 쓴 것이었다. 말은 혼자 태어나지 않는다. 대개 <em>그 앞의 어떤 일</em>을 가리킨다.<br><br>그렇다면 그 커피 행사는 왜 그렇게 문제가 됐던 걸까? 아직 진짜 뿌리에는 닿지 못했다.`,
+      choices: [
+        { num: '1', text: '"탱크"라는 말이 원래 무엇을 가리키는지 역사부터 확인한다.', hint: '가장 뿌리가 되는 사건으로 간다.', keywords: ['탱크', '역사', '5·18', '뿌리'] },
+        { num: '2', text: '왜 하필 "5월 18일"이라는 날짜가 문제였는지 살펴본다.', hint: '날짜에 담긴 의미를 본다.', keywords: ['날짜', '5월 18일', '왜 하필', '의미'] },
+        { num: '3', text: '"우연 아니냐"는 말과 "그럴 리 없다"는 말 중 무엇이 맞는지 따져본다.', hint: '우연인지 아닌지 판단한다.', keywords: ['우연', '고의', '따져', '판단'] }
+      ],
+      persona: '길잡이',
+      opening: '핵심을 짚었어. 말은 <strong>맥락</strong>을 타고 옮겨 다니지. 그런데 궁금한 게 있어 — 어떤 말이 원래 슬픈 사건에서 나온 걸 <em>모르고</em> 썼다면, 그건 잘못이 아닐까? 아니면 몰랐어도 문제일까? 네 생각을 들려줘.',
+      followup: function (text) {
+        var t = text.replace(/\s/g, '');
+        if (/(몰랐으면|모르면괜|몰라서|의도없|고의아니)/.test(t)) return '"몰랐다면 봐줄 수 있다"는 생각, 이해해. 그런데 한 번 뒤집어 보자 — 누군가 크게 다친 말을 무심코 반복하면, 상처받는 사람에게는 "몰랐다"가 위로가 될까? 몰랐던 것과 괜찮은 것은 조금 다를 수 있어.';
+        if (/(몰라도문제|알아야|알았어야|찾아봤어야|공인|공적)/.test(t)) return '날카롭다. "몰랐다"가 면죄부가 되긴 어렵다는 거지. 그래서 사람들은 "안다는 것" 자체를 중요하게 여겨. 오늘 네가 하는 이 조사가 바로 그 "아는 일"이야.';
+        return '정답은 없어. 다만 "의도"와 "결과"를 나눠서 보면 생각이 정리돼. 몰랐다는 건 의도의 문제, 상처는 결과의 문제니까. 이 둘은 뒤 막에서 다시 만나게 될 거야.';
+      }
+    },
+    {
+      id: 3,
+      day: '조사 3 · 뿌리에 닿다 (1)',
+      title: '"탱크"라는 말 뒤의 1980년',
+      place: '역사 자료를 펼치며',
+      text: `드디어 뿌리에 닿았다. <strong>5·18 민주화운동</strong>. 1980년, 광주의 시민과 학생들이 민주주의를 요구하며 거리로 나섰고, 그 진압 과정에서 많은 사람이 목숨을 잃거나 다쳤다.<br><br>"탱크"는 그날 거리로 들어온 <strong>군 장비</strong>를 떠올리게 하는 말이다. 그래서 광주 사람들에게 "탱크"는 상품 이름이나 농담이 아니라, <em>가족을 잃은 날의 기억</em> 그 자체일 수 있다.<br><br>이제 왜 광주의 학교가 그토록 아팠는지, 조금은 알 것 같다.`,
+      choices: [
+        { num: '1', text: '그날을 직접 겪은 사람과 유가족이 지금도 있다는 사실에 주목한다.', hint: '역사가 아니라 "지금 사는 사람"의 일이다.', keywords: ['유가족', '지금도', '살아있는', '가족'] },
+        { num: '2', text: '왜 이 일이 법과 국가기념일로까지 규정됐는지 살펴본다.', hint: '사회가 어떻게 이 일을 매듭지었는지 본다.', keywords: ['법', '국가기념일', '규정', '공식'] },
+        { num: '3', text: '내 가족이 그런 일을 겪었다면 어떤 기분일지 대입해 본다.', hint: '입장을 바꿔 생각한다.', keywords: ['내 가족', '입장 바꿔', '기분', '만약'] }
+      ],
+      persona: '길잡이',
+      opening: '여기가 오늘 조사의 가장 무거운 지점이야. 잠깐 멈춰서 생각해 보자 — 만약 네가 아끼는 사람이 어떤 사건으로 세상을 떠났는데, 사람들이 그 사건을 <strong>응원 구호나 할인 행사 이름</strong>으로 쓴다면, 너는 어떤 마음이 들 것 같아?',
+      followup: function (text) {
+        var t = text.replace(/\s/g, '');
+        if (/(화|분노|슬프|아프|끔찍|모욕|참기|속상|눈물|상처)/.test(t)) return '그 마음이 바로 광주의 많은 사람들이 느낀 감정과 닿아 있어. "역사"라는 말은 멀게 들리지만, 그 안에는 지금도 그 기억을 안고 사는 사람이 있다는 걸 잊지 않는 게 중요해.';
+        if (/(이해|알것같|그렇겠|공감|입장)/.test(t)) return '그렇게 대입해 보는 힘이 공감이야. 역사 교육이 연도를 외우는 데서 끝나면 안 되는 이유가 여기 있어 — 숫자 뒤에는 언제나 사람이 있으니까.';
+        return '어떤 답이든, 잠깐이라도 그 사람의 자리에 서 봤다면 충분해. 그 짧은 상상이 "함부로 하지 않는 마음"의 시작이거든.';
+      }
+    },
+    {
+      id: 4,
+      day: '조사 4 · 뿌리에 닿다 (2)',
+      title: '"책상에 탁" 뒤의 1987년',
+      place: '또 하나의 이름 앞에서',
+      text: `구호에는 하나가 더 얽혀 있었다. <strong>"책상에 탁."</strong><br><br>1987년, 경찰 조사를 받던 대학생 <strong>박종철</strong>이 고문으로 숨졌다. 당국은 사인을 "책상을 탁 치니 억 하고 죽었다"고 둘러댔다. 이 뻔한 거짓말은 오히려 진실을 요구하는 시민들을 거리로 불러냈고, 그해 <strong>6월 민주항쟁</strong>으로 이어졌다.<br><br>그러니 "책상에 탁"은 <em>한 사람의 죽음과, 그 죽음을 덮으려던 거짓말</em>을 동시에 가리킨다. 가벼운 말장난으로 쓰기엔, 너무 무거운 말이었다.`,
+      choices: [
+        { num: '1', text: '슬픈 사건이 어떻게 "밈"처럼 가볍게 소비되는지 그 과정을 생각한다.', hint: '무거운 일이 어떻게 가벼워지는지 본다.', keywords: ['밈', '가볍게', '소비', '과정'] },
+        { num: '2', text: '한 사람의 죽음을 농담 소재로 쓸 때 남는 가족을 떠올린다.', hint: '남겨진 사람을 생각한다.', keywords: ['죽음', '가족', '남겨진', '유족'] },
+        { num: '3', text: '왜 이런 말들이 특정 온라인 공간에서 퍼지는지 배경을 살핀다.', hint: '말이 퍼지는 통로를 본다.', keywords: ['온라인', '퍼지는', '배경', '통로'] }
+      ],
+      persona: '길잡이',
+      opening: '이런 말들이 처음부터 "누군가를 놀리려고" 만들어졌을 수도, 아무 생각 없이 따라 한 것일 수도 있어. 어느 쪽이든 결과는 비슷했지. 너는 어떻게 생각해 — <strong>무거운 사건이 어쩌다 가벼운 농담처럼</strong> 쓰이게 되는 걸까?',
+      followup: function (text) {
+        var t = text.replace(/\s/g, '');
+        if (/(잘몰라|모르니까|무관심|관심없|배우지|안배워|교육)/.test(t)) return '맞아. 잘 모를수록 가벼워지기 쉬워. 그래서 "아는 것"이 곧 존중의 시작이라는 말이 나오는 거야. 반대로 알고도 쓴다면, 그건 또 다른 문제가 되겠지.';
+        if (/(재미|웃기려|자극|관심끌|반응|과시|따라)/.test(t)) return '날카로운 관찰이야. 반응을 얻으려고 자극적인 말을 따라 쓰는 사이, 그 말이 원래 품고 있던 아픔은 지워지지. 지워진 자리엔 늘 진짜 아픈 사람이 남아 있고.';
+        return '정해진 답은 없어. 다만 "왜 가벼워졌을까"를 묻는 순간, 우리는 그 말을 다시 무겁게 되돌릴 힘을 얻어. 네가 지금 하고 있는 게 바로 그 일이야.';
+      }
+    },
+    {
+      id: 5,
+      day: '조사 5 · 농담과 상처 사이',
+      title: '"그냥 장난"과 "그건 아니지" 사이에서',
+      place: '여러 반응을 읽으며',
+      text: `조사를 하다 보니 반응이 하나가 아니다. "응원이 그렇게까지 큰 잘못이냐"는 사람도 있고, "명백히 선을 넘었다"는 사람도 있다. 실제로 이 사건을 두고 <strong>사회적으로 여러 목소리</strong>가 나왔다.<br><br>정리하다 보니 한 가지가 보인다. 많은 경우 <strong>말한 사람의 의도</strong>와 <strong>듣는 사람이 받은 상처</strong>는 다르다는 것. "장난이었다"는 의도의 이야기이고, "상처받았다"는 결과의 이야기다.<br><br><em>이 둘이 부딪칠 때, 우리는 무엇을 먼저 봐야 할까?</em>`,
+      choices: [
+        { num: '1', text: '의도가 어떻든, 상처받은 사람이 있다면 그것부터 봐야 한다.', hint: '결과와 피해자를 중심에 둔다.', keywords: ['상처', '결과', '피해자', '먼저'] },
+        { num: '2', text: '의도도 중요하다. 다만 "몰랐다"가 면죄부는 아니다.', hint: '의도와 책임을 함께 본다.', keywords: ['의도', '책임', '몰랐다', '면죄부'] },
+        { num: '3', text: '"표현의 자유"와 "존중" 사이의 균형을 각자 고민해야 한다.', hint: '두 가치의 긴장을 인정한다.', keywords: ['표현의 자유', '존중', '균형', '고민'] }
+      ],
+      persona: '길잡이',
+      opening: '이 막엔 "정답"을 정해 주지 않을게. 이건 사회가 지금도 함께 고민하는 문제거든. 대신 네 생각이 궁금해 — <strong>"장난이었다"</strong>는 말과 <strong>"상처받았다"</strong>는 말이 부딪칠 때, 너라면 무엇을 먼저 살피고 싶어? 그리고 왜?',
+      followup: function (text) {
+        var t = text.replace(/\s/g, '');
+        if (/(상처|피해자|받은사람|결과|아픈사람)/.test(t)) return '"상처받은 사람을 먼저 본다" — 많은 사람이 공감하는 기준이야. 동시에 어떤 이들은 "의도도 봐야 공정하다"고 말하지. 두 시각을 다 이해하되 네 기준을 세운 것, 그게 이 조사의 핵심이야.';
+        if (/(의도|책임|몰랐|알고|고의)/.test(t)) return '"의도를 함께 본다"는 것도 중요한 관점이야. 다만 네가 적었듯 "몰랐다"가 곧 "괜찮다"는 아니지. 의도를 살피되 결과에 대한 책임은 남는다 — 균형 잡힌 생각이야.';
+        if (/(자유|균형|둘다|양쪽|고민)/.test(t)) return '표현의 자유와 존중, 둘 다 소중한 가치라 부딪칠 때가 있지. 정답을 단정하지 않고 "긴장"을 인정하는 태도 자체가 성숙한 거야. 사회도 바로 그 지점에서 계속 토론하고 있어.';
+        return '어떤 쪽이든, 네가 "이유"를 붙여 생각했다면 그걸로 충분해. 남의 결론을 받아 적는 것과, 스스로 기준을 세우는 건 완전히 다른 일이니까.';
+      }
+    },
+    {
+      id: 6,
+      day: '조사 6 · 조사를 마치며',
+      title: '그래서, 다음엔 어떻게 할까',
+      place: '노트를 덮기 전에',
+      text: `사건은 사과와 화해의 움직임으로 이어졌다. 학생들은 광주를 찾아 사과하고, 두 지역 교육청은 이 일을 계기로 <strong>민주시민교육</strong>을 강화하기로 했다. 이 사건은 결국 "누가 얼마나 잘못했나"를 넘어 <strong>학교 응원 문화 전체</strong>를 되돌아보게 만들었다.<br><br>당신의 조사도 여기서 끝난다. 처음엔 "이게 왜 큰일이지?" 싶었는데, 이제는 적어도 <em>왜 어떤 말이 누군가에게는 상처가 되는지</em> 설명할 수 있게 됐다.<br><br>마지막 질문. <strong>이 조사에서 네가 스스로 얻은 가장 중요한 한 가지는 무엇일까?</strong>`,
+      choices: [
+        { num: '1', text: '말은 그 뒤의 역사를 가리킨다 — 그래서 "아는 것"이 존중의 시작이다.', hint: '앎과 존중을 연결한다.', keywords: ['안다', '존중', '역사', '말의 무게'] },
+        { num: '2', text: '내 농담이 누군가에겐 상처일 수 있다 — 그래서 한 번 더 생각한다.', hint: '공감과 신중함을 얻는다.', keywords: ['농담', '상처', '공감', '한 번 더'] },
+        { num: '3', text: '한 사건에도 여러 시각이 있다 — 그래서 스스로 판단하는 힘이 필요하다.', hint: '비판적 사고를 얻는다.', keywords: ['여러 시각', '스스로 판단', '비판적', '균형'] }
+      ],
+      persona: '길잡이',
+      opening: '여기까지 온 것만으로도 정말 잘했어. 마지막으로, 누가 정해 준 교훈 말고 <strong>네가 직접 건져 올린 한 문장</strong>을 듣고 싶어. 이 조사에서 너에게 가장 남는 건 뭐야?',
+      followup: function (text) {
+        var t = text.replace(/\s/g, '');
+        if (/(안다|알아야|존중|배워|역사|무게)/.test(t)) return '"알기에 함부로 하지 않는다" — 오늘 조사를 한 문장으로 요약하면 이거야. 그 문장을 네 것으로 만든 것, 그게 오늘의 진짜 결과야.';
+        if (/(농담|말조심|상처|공감|한번더|생각하고)/.test(t)) return '"내 말이 누군가에겐 다르게 닿을 수 있다"는 감각 — 이건 평생 쓰이는 힘이야. 그 한 번의 멈칫함이 많은 걸 바꿔.';
+        if (/(여러시각|판단|비판|균형|스스로)/.test(t)) return '"스스로 판단한다"는 결론, 멋지다. 남의 화나 남의 결론을 따라가는 게 아니라 근거를 놓고 내 생각을 세우는 것 — 그게 시민이 갖춰야 할 힘이지.';
+        return '네가 직접 고른 문장이라는 게 가장 중요해. 이제 아래 되돌아보기까지 채우면, 오늘의 조사가 온전히 네 것이 될 거야.';
+      }
+    }
+  ];
+
+  // 결말(승패 없음): 모두가 도달하는 성찰형 마무리
+  var EPILOGUE = {
+    title: '조사 노트를 덮으며',
+    desc: '한 야구 경기의 구호에서 시작된 조사가, 1980년과 1987년의 두 사건까지 닿았습니다.\n\n오늘 우리는 누구를 비난하기 위해서가 아니라, "어떤 말이 왜 누군가에게 상처가 되는지"를 스스로 이해하기 위해 이 길을 걸었습니다.\n\n말은 대개 그 뒤의 어떤 일을 가리킵니다. 그래서 우리가 무엇을 말하는지 안다는 것은, 곧 함께 사는 사람을 존중하는 일이기도 합니다.\n\n이 사건을 두고 사회에는 여전히 여러 목소리가 있습니다. 무엇이 정답인지 단정하기보다, 오늘 세운 나만의 기준을 아래에 적어 보세요.'
+  };
+
+  // 결과 화면 "사실 정리" 카드
+  var FACTS = [
+    { term: '5·18 민주화운동 (1980)', body: '광주의 시민·학생이 민주주의를 요구하며 벌인 운동으로, 진압 과정에서 많은 시민이 희생됐습니다. 오늘날 법으로 그 성격이 규정되고 국가기념일로 지정돼 있습니다. "탱크"는 그날의 군 장비를 떠올리게 하는 말입니다.' },
+    { term: '박종철 고문치사 사건 (1987)', body: '경찰 조사를 받던 대학생 박종철이 고문으로 숨졌고, 당국은 사인을 "책상을 탁 치니 억 하고 죽었다"고 둘러댔습니다. 이 사건은 그해 6월 민주항쟁의 도화선이 됐습니다. "책상에 탁"은 이 일을 가리킵니다.' },
+    { term: '2026년 커피 브랜드 행사 논란', body: '그해 5월 18일 진행된 텀블러 행사의 "탱크데이", "책상에 탁" 문구가 위 두 사건을 연상시킨다는 비판을 받았고, 회사는 사과했습니다. 야구장 구호는 이 논란을 가져와 상대를 놀리는 데 쓴 것이었습니다.' },
+    { term: '고교야구 응원 구호 논란 (2026)', body: '경기 중 나온 구호가 5·18을 조롱한 것으로 해석되며 논란이 됐고, 학교와 학생은 사과·방문·참배 등으로 이어졌습니다. 이 일은 학교 응원 문화 전반을 되돌아보는 계기가 됐습니다.' },
+    { term: '핵심은 "말이 가리키는 것"', body: '문제는 응원 자체가 아니라, 그 말이 실존하는 비극과 피해자를 가리켰다는 데 있습니다. 의도가 무엇이었든, 상처받은 사람이 있었다는 사실은 남습니다.' }
+  ];
+
+  // ─── 게임 상태 ───
+  var initial = { studentInfo: { grade: '', class: '', num: '', name: '' }, currentStage: 0, log: [], currentChoice: null, chatTurnDone: false, startTime: null };
+  var state = JSON.parse(JSON.stringify(initial));
+
+  // ═══════════════ 유틸 ═══════════════
+  function checkProfanity(text) {
+    var c = text.replace(/[\s.,~!@#$%^&*()_+|<>?:{}]/g, '');
+    return /시발|씨발|ㅅㅂ|좆|ㅈㄲ|개새|병신|ㅂㅅ|존나|ㅈㄴ|썅|새끼|느금마|애미|애비|미친놈|미친년/.test(c);
+  }
+  function checkSincerity(text) {
+    var c = text.replace(/\s/g, '');
+    if (c.length <= 3) return false;
+    var lazy = ['아니', '아냐', '몰라', '그냥', '어쩌라', '글쎄', 'ㅇㅁㄴㄹ', '응', '어', 'ㅋㅋ', 'ㅋㅋㅋ', '됐어', '없어', '패스'];
+    if (!/[가-힣]/.test(text)) return false;
+    if (/^[ㄱ-ㅎㅏ-ㅣ\s]+$/.test(text)) return false;
+    if (lazy.indexOf(c) !== -1) return false;
+    return true;
+  }
+  function showWarn(msg) {
+    var w = $('hwt-warn-popup');
+    w.textContent = msg; w.style.display = 'block';
+    setTimeout(function () { w.style.display = 'none'; }, 2400);
+  }
+
+  // ─── 타이틀 설명 ───
+  var TITLE_DESC =
+    '2026년, 한 고교야구 경기에서 나온 <strong>응원 구호</strong>가 큰 논란이 됐습니다. ' +
+    '"탱크데이", "스타벅스 가야지" 같은 말이 5·18 민주화운동을 조롱한 것으로 받아들여졌기 때문입니다.<br><br>' +
+    '이 게임은 <strong>누구를 비난하거나 편을 나누기 위한 것이 아닙니다.</strong> ' +
+    '그 구호가 어떤 역사를 가리키는지, 그리고 <em>왜 어떤 말은 누군가에게 상처가 되는지</em>를 ' +
+    '여러분이 <strong>스스로 조사하고 이해</strong>해 보기 위한 것입니다.<br><br>' +
+    '6번의 짧은 조사를 하며, 매번 <strong>내 생각을 직접 한두 문장</strong>으로 적게 됩니다. 정답은 없습니다.';
+
+  var NEUTRAL_NOTE =
+    '이 활동은 특정 정당·인물·집단을 지지하거나 비판하지 않습니다. ' +
+    '다룬 내용은 교과서와 법으로 확립된 역사적 사실, 그리고 공개 보도된 사건에 한합니다. ' +
+    '처벌 수위 등 사회적으로 의견이 갈리는 부분은 "여러 시각이 있다"고만 소개합니다. 여러분의 응답에는 옳고 그름의 점수가 매겨지지 않습니다.';
+
+  // ─── 학생정보 검증 ───
+  function checkFormReady() {
+    var g = $('hwt-info-grade').value.trim(), c = $('hwt-info-class').value.trim();
+    var n = $('hwt-info-num').value.trim(), name = $('hwt-info-name').value.trim();
+    $('hwt-btn-start').disabled = !(g && c && n && name);
+  }
+
+  // ─── 시작 ───
+  function startGame() {
+    state.studentInfo = {
+      grade: $('hwt-info-grade').value.trim(), class: $('hwt-info-class').value.trim(),
+      num: $('hwt-info-num').value.trim(), name: $('hwt-info-name').value.trim()
+    };
+    state.startTime = new Date();
+    $('hwt-screen-title').style.display = 'none';
+    $('hwt-screen-game').style.display = 'block';
+    buildProgress();
+    renderStage();
+    ROOT.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ─── 진행 표시 ───
+  function buildProgress() {
+    var box = $('hwt-progress-marks'); clearNode(box);
+    STAGES.forEach(function (s, i) {
+      var mk = makeEl('div', 'pmark'); mk.setAttribute('data-mark', String(i));
+      mk.appendChild(makeEl('span', 'pmark-dot'));
+      mk.appendChild(makeEl('span', 'pmark-label', '조사 ' + (i + 1)));
+      box.appendChild(mk);
+    });
+  }
+  function updateProgress() {
+    var marks = ROOT.querySelectorAll('.pmark');
+    for (var i = 0; i < marks.length; i++) {
+      marks[i].classList.remove('done', 'active');
+      if (i < state.currentStage) marks[i].classList.add('done');
+      else if (i === state.currentStage) marks[i].classList.add('active');
+    }
+  }
+
+  // ─── 자료 카드 ───
+  function renderSourceCard() {
+    var src = SOURCE_CARDS[state.currentStage]; if (!src) return;
+    $('hwt-source-kicker').textContent = src.kicker;
+    $('hwt-source-quote').textContent = src.quote;
+    var attr = $('hwt-source-attr'); clearNode(attr);
+    attr.appendChild(makeEl('strong', null, src.source));
+    if (src.note) attr.appendChild(document.createTextNode(' · ' + src.note));
+  }
+
+  // ─── 씬 렌더 ───
+  function renderStage() {
+    var stage = STAGES[state.currentStage];
+    state.currentChoice = null; state.chatTurnDone = false;
+    updateProgress(); renderSourceCard();
+    $('hwt-progress-turn').textContent = '조사 ' + stage.id + ' / ' + STAGES.length;
+    $('hwt-scene-day').textContent = stage.day;
+    $('hwt-scene-title').textContent = stage.title;
+    $('hwt-scene-place').textContent = stage.place;
+    renderFormatted($('hwt-scene-text'), stage.text);
+
+    var choicesEl = $('hwt-choices'); clearNode(choicesEl);
+    stage.choices.forEach(function (c, idx) {
+      var btn = makeEl('button', 'choice-btn');
+      btn.appendChild(makeEl('span', 'choice-num', c.num));
+      var body = makeEl('span', 'choice-body');
+      body.appendChild(makeEl('span', 'choice-text', c.text));
+      body.appendChild(makeEl('span', 'choice-hint', c.hint));
+      btn.appendChild(body);
+      btn.addEventListener('click', function () { selectChoice(idx); });
+      choicesEl.appendChild(btn);
+    });
+
+    $('hwt-chat-section').classList.remove('active');
+    clearNode($('hwt-chat-messages'));
+    var ci = $('hwt-chat-input');
+    ci.value = ''; ci.disabled = false; ci.style.height = 'auto';
+    $('hwt-btn-send').disabled = true;
+    $('hwt-chat-tip').style.display = 'none';
+    $('hwt-kw-hint').style.display = 'none';
+    $('hwt-btn-next').classList.add('hidden');
+    $('hwt-chat-header').textContent = '이야기 나누기 — ' + stage.persona;
+  }
+
+  // ─── 선택 ───
+  function selectChoice(idx) {
+    if (state.chatTurnDone) return;
+    state.currentChoice = idx;
+    var btns = ROOT.querySelectorAll('.choice-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('selected', i === idx);
+
+    var stage = STAGES[state.currentStage];
+    var choice = stage.choices[idx];
+
+    $('hwt-chat-section').classList.add('active');
+    clearNode($('hwt-chat-messages'));
+    addBubble('ai', stage.opening, stage.persona);
+
+    var kwBox = $('hwt-kw-hint');
+    if (choice.keywords && choice.keywords.length) {
+      clearNode(kwBox);
+      kwBox.appendChild(makeEl('span', 'kw-hint-label', '💡 이런 낱말을 넣어 문장으로 적어 보세요'));
+      choice.keywords.forEach(function (k) { kwBox.appendChild(makeEl('span', 'kw-chip', k)); });
+      kwBox.appendChild(makeEl('div', 'kw-note', '꼭 이 낱말이 아니어도 괜찮아요. 중요한 건 "내 생각"과 "그 이유"예요.'));
+      kwBox.style.display = 'block';
+    } else { kwBox.style.display = 'none'; }
+
+    if (state.currentStage === 0) {
+      var tip = $('hwt-chat-tip'); clearNode(tip);
+      tip.appendChild(makeEl('strong', null, '이렇게 적어보세요. '));
+      tip.appendChild(document.createTextNode('"나는 ~라고 생각한다. 왜냐하면 ~ 때문이다." 처럼, 생각과 이유를 함께 적으면 좋아요.'));
+      tip.style.display = 'block';
+    }
+
+    $('hwt-chat-input').focus();
+    setTimeout(function () { $('hwt-chat-section').scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 200);
+  }
+
+  // ─── 말풍선 ───
+  function addBubble(who, content, persona) {
+    var box = $('hwt-chat-messages');
+    var div = makeEl('div', 'bubble ' + (who === 'ai' ? 'ai-msg' : 'user-msg'));
+    if (who === 'ai') {
+      div.appendChild(makeEl('span', 'ai-tag', persona || '길잡이'));
+      var body = document.createElement('span');
+      renderFormatted(body, content);
+      div.appendChild(body);
+    } else {
+      var parts = String(content).split('\n');
+      for (var i = 0; i < parts.length; i++) {
+        if (i > 0) div.appendChild(document.createElement('br'));
+        div.appendChild(document.createTextNode(parts[i]));
+      }
+    }
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  // ─── 전송 ───
+  function sendReason() {
+    var input = $('hwt-chat-input');
+    var text = input.value.trim();
+    if (!text) return;
+
+    if (checkProfanity(text)) { showWarn('🚨 거친 표현이 감지되어 전송되지 않았어요.'); return; }
+    if (!checkSincerity(text)) {
+      addBubble('user', text);
+      input.value = ''; input.style.height = 'auto';
+      setTimeout(function () {
+        addBubble('ai', '조금만 더 들려줄래? <strong>완성된 문장</strong>으로, 네 생각과 그 이유를 한두 줄로 적어 주면 좋겠어. 정답은 없으니 편하게.', STAGES[state.currentStage].persona);
+        input.focus();
+      }, 600);
+      return;
+    }
+
+    var stage = STAGES[state.currentStage];
+    var choice = stage.choices[state.currentChoice];
+
+    addBubble('user', text);
+    input.value = ''; input.style.height = 'auto';
+    $('hwt-btn-send').disabled = true; input.disabled = true;
+    $('hwt-chat-tip').style.display = 'none';
+    $('hwt-kw-hint').style.display = 'none';
+
+    var box = $('hwt-chat-messages');
+    var typing = makeEl('div', 'bubble ai-msg');
+    typing.setAttribute('data-typing', '1');
+    for (var d = 0; d < 3; d++) typing.appendChild(makeEl('span', 'typing-dot'));
+    box.appendChild(typing); box.scrollTop = box.scrollHeight;
+
+    setTimeout(function () {
+      var t = ROOT.querySelector('[data-typing]');
+      if (t) t.parentNode.removeChild(t);
+      var reply = stage.followup(text, state.currentStage);
+      addBubble('ai', reply, stage.persona);
+
+      state.log.push({
+        stageId: stage.id, day: stage.day, title: stage.title,
+        choiceIdx: state.currentChoice, choiceText: choice.text,
+        reasonText: text, aiReply: reply
+      });
+
+      state.chatTurnDone = true; input.disabled = true;
+      var btnNext = $('hwt-btn-next');
+      btnNext.classList.remove('hidden');
+      btnNext.textContent = state.currentStage === STAGES.length - 1 ? '조사를 마치고 정리하기' : '다음 조사로';
+      setTimeout(function () { btnNext.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 200);
+    }, 1000);
+  }
+
+  // ─── 다음 ───
+  function proceedToNext() {
+    try { sessionStorage.setItem('hwt_state', JSON.stringify(state)); } catch (e) {}
+    if (state.currentStage >= STAGES.length - 1) { showResult(); return; }
+    state.currentStage++;
+    renderStage();
+    ROOT.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ─── 결과 ───
+  function showResult() {
+    $('hwt-screen-game').style.display = 'none';
+    $('hwt-screen-result').style.display = 'block';
+    $('hwt-result-title').textContent = EPILOGUE.title;
+    $('hwt-result-desc').textContent = EPILOGUE.desc;
+
+    var factBox = $('hwt-fact-body'); clearNode(factBox);
+    FACTS.forEach(function (f) {
+      var row = makeEl('div', 'fact-row');
+      row.appendChild(makeEl('div', 'fact-term', f.term));
+      row.appendChild(makeEl('div', 'fact-body', f.body));
+      factBox.appendChild(row);
+    });
+
+    var logBox = $('hwt-log-body'); clearNode(logBox);
+    state.log.forEach(function (l, i) {
+      var item = makeEl('div', 'log-item');
+      item.appendChild(makeEl('div', 'log-stage', '조사 ' + (i + 1) + ' · ' + l.title));
+      item.appendChild(makeEl('div', 'log-choice', '선택: ' + l.choiceText));
+      item.appendChild(makeEl('div', 'log-reason', '내 생각: ' + (l.reasonText || '')));
+      logBox.appendChild(item);
+    });
+
+    var help = $('hwt-helpline'); clearNode(help);
+    help.appendChild(document.createTextNode('이 활동은 역사적 사건과 그 피해를 다룹니다. 관련해 마음이 무겁거나 이야기하고 싶은 점이 있다면, 담임·상담 선생님과 나눠 보는 것도 좋습니다.'));
+
+    ROOT.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ─── 제출(GAS) ───
+  var hasSubmitted = false;
+  function submitToSheet() {
+    var statusEl = $('hwt-submit-status');
+    var btn = $('hwt-btn-submit');
+
+    if (!GAS_URL || GAS_URL.indexOf('붙여넣기') !== -1) {
+      statusEl.style.color = 'var(--hwt-mark)';
+      statusEl.textContent = '아직 GAS 주소가 설정되지 않았어요. (코드 상단 GAS_URL 확인)';
+      return;
+    }
+    if (hasSubmitted && !window.confirm('이미 제출했어요. 다시 제출할까요?')) return;
+
+    var info = state.studentInfo;
+    var sno = info.grade + String(info.class).padStart(2, '0') + String(info.num).padStart(2, '0');
+    var choices = state.log.map(function (l, i) {
+      return '[조사' + (i + 1) + '] ' + l.choiceText + '\n  → 내 생각: ' + (l.reasonText || '');
+    }).join('\n\n');
+
+    var payload = {
+      학번: sno, 학년: info.grade, 반: info.class, 번호: info.num, 이름: info.name,
+      선택과생각: choices,
+      성찰1: ($('hwt-reflect-1').value || '').trim(),
+      성찰2: ($('hwt-reflect-2').value || '').trim(),
+      성찰3: ($('hwt-reflect-3').value || '').trim()
+    };
+
+    btn.disabled = true;
+    statusEl.style.color = 'var(--hwt-muted)';
+    statusEl.textContent = '제출하는 중…';
+
+    // text/plain 전송 → CORS 사전요청(preflight) 회피
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) })
+      .then(function () {
+        hasSubmitted = true;
+        statusEl.style.color = '#2f7d4f';
+        statusEl.textContent = '✅ 제출 완료! 선생님 시트에 저장되었습니다.';
+      })
+      .catch(function (err) {
+        statusEl.style.color = 'var(--hwt-mark)';
+        statusEl.textContent = '제출 실패: ' + err + ' (인터넷 · GAS 배포 권한 "모든 사용자" 확인)';
+      })
+      .then(function () { btn.disabled = false; });
+  }
+
+  function printReport() { window.print(); }
+
+  function restartGame() {
+    if (!window.confirm('처음으로 돌아갈까요? 지금까지의 조사 기록은 사라집니다.')) return;
+    try { sessionStorage.removeItem('hwt_state'); } catch (e) {}
+    state = JSON.parse(JSON.stringify(initial));
+    $('hwt-screen-result').style.display = 'none';
+    $('hwt-screen-game').style.display = 'none';
+    $('hwt-screen-title').style.display = 'block';
+    ['hwt-info-grade', 'hwt-info-class', 'hwt-info-num', 'hwt-info-name'].forEach(function (id) { $(id).value = ''; });
+    ['hwt-reflect-1', 'hwt-reflect-2', 'hwt-reflect-3'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
+    hasSubmitted = false;
+    var ss = $('hwt-submit-status'); if (ss) ss.textContent = '';
+    checkFormReady();
+    ROOT.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ═══════════════ 바인딩 ═══════════════
+  renderFormatted($('hwt-title-desc'), TITLE_DESC);
+  $('hwt-neutral-note').textContent = NEUTRAL_NOTE;
+
+  ['hwt-info-grade', 'hwt-info-class', 'hwt-info-num', 'hwt-info-name'].forEach(function (id) {
+    $(id).addEventListener('input', checkFormReady);
+  });
+  checkFormReady();
+
+  $('hwt-btn-start').addEventListener('click', startGame);
+  $('hwt-btn-send').addEventListener('click', sendReason);
+  $('hwt-btn-next').addEventListener('click', proceedToNext);
+  $('hwt-btn-restart').addEventListener('click', restartGame);
+  $('hwt-btn-print').addEventListener('click', printReport);
+  $('hwt-btn-submit').addEventListener('click', submitToSheet);
+
+  var chatInput = $('hwt-chat-input');
+  chatInput.addEventListener('input', function () {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = chatInput.scrollHeight + 'px';
+    $('hwt-btn-send').disabled = chatInput.value.trim().length === 0 || state.chatTurnDone;
+  });
+  chatInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!$('hwt-btn-send').disabled) sendReason();
+    }
+  });
+
+})();
+</script>
+</div>
